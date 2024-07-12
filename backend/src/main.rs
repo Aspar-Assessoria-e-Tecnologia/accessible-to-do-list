@@ -1,22 +1,18 @@
-use actix_web::{App, HttpServer};
-use dotenv::dotenv;
-use std::env;
+mod domain;
+mod application;
+mod infra;
 
-mod handlers;
-mod routes;
-
+use actix_web::{App, HttpServer, web};
+use infra::web::handlers::{create_task, health_check};
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    dotenv().ok();
-    let host = env::var("HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
-    let port = env::var("PORT").unwrap_or_else(|_| "8080".to_string());
-
     HttpServer::new(|| {
         App::new()
-            .configure(routes::routes::config)
+            .route("/tasks", web::post().to(create_task))
+            .route("/health", web::get().to(health_check))
     })
-    .bind(format!("{}:{}", host, port))?
+    .bind("127.0.0.1:8080")?
     .run()
     .await
 }
